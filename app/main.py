@@ -1,13 +1,24 @@
 from fastapi import FastAPI
+from sqlalchemy import text
+from app.db.session import engine
 
-app = FastAPI(
-    title="Crowd Funding API",
-    version="1.0.0",
-    description="크라우드 펀딩 플랫폼 백엔드 API"
-)
+app = FastAPI()
 
+# 1. 서버 시작 시 DB 연결 테스트 (Startup Event)
+# 서버가 켜질 때 딱 한 번 실행되는 함수입니다.
+@app.on_event("startup")
+def check_db_connection():
+    try:
+        # 엔진을 통해 DB와 연결을 시도하고, 간단한 질의(SELECT 1)를 보냅니다.
+        # SELECT 1은 DB가 살아있는지 확인하는 가장 가벼운 명령어입니다.
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        print("\n✅✅✅ 데이터베이스 연결 성공! (PostgreSQL) ✅✅✅\n")
+    except Exception as e:
+        print("\n❌❌❌ 데이터베이스 연결 실패! ❌❌❌")
+        print(f"에러 내용: {e}\n")
+
+# 2. 기본 페이지 (Health Check 용)
 @app.get("/")
 def read_root():
-    return {"message": "Hello, Crowd Funding!"}
-
-# 나중에 여기에 DB 연결과 라우터를 추가할 예정
+    return {"message": "Welcome to My Funding Service!"}
