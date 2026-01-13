@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
 
-    # 2. 읽어온 정보로 'DB 접속 주소(URL)'를 조립합니다.
+    # 2. 읽어온 정보로 'DB 접속 주소(URL)'를 조립
     # 형태: postgresql://아이디:비번@주소:포트/DB이름
     @property
     def DATABASE_URL(self) -> str:
