@@ -12,6 +12,7 @@ from app.db.session import get_db
 
 router = APIRouter()
 
+#로그인 토큰 발급 엔드포인트
 @router.route("/login/access-token")
 def login_access_token(
     db: Session = Depends(get_db),

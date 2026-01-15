@@ -1,5 +1,5 @@
 from typing import Any, Union
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import jwt
 from passlib.context import CryptContext
 from app.core.config import settings
@@ -24,7 +24,7 @@ def create_access_token(subject: Union[str, Any], expires_delta: timedelta = Non
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    # 2) 토큰에 담을 정보
+    # 2) 토큰에 담을 정보 / 만료시간, 이메일
     to_encode = {"exp" : expire, "sub" : str(subject)}
 
     # 3) 암호화 서명
