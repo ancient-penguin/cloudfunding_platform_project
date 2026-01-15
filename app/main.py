@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from sqlalchemy import text
 from app.db.session import engine
 
+from app.api.v1.endpoints.user import router as user_router
+from app.api.v1.endpoints.login import router as login_router
+
 app = FastAPI()
 
 # 1. 서버 시작 시 DB 연결 테스트 (Startup Event)
@@ -17,6 +20,11 @@ def check_db_connection():
     except Exception as e:
         print("\n❌❌❌ 데이터베이스 연결 실패! ❌❌❌")
         print(f"에러 내용: {e}\n")
+
+#라우터 추가
+app.include_router(user_router, prefix="/users", tags=["users"])
+
+app.include_router(login_router, tags=["login"])
 
 # 2. 기본 페이지 (Health Check 용)
 @app.get("/")
