@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from sqlalchemy import text
 from app.db.session import engine
 
-from app.api.v1.endpoints import user, login
+from app.api.v1.endpoints.user import router as user_router
+from app.api.v1.endpoints.login import router as login_router
 
 app = FastAPI()
 
@@ -21,9 +22,9 @@ def check_db_connection():
         print(f"에러 내용: {e}\n")
 
 #라우터 추가
-app.include_router(user.router, prefix="/users", tags=["users"])
+app.include_router(user_router, prefix="/users", tags=["users"])
 
-app.include_router(login.router, tags=["login"])
+app.include_router(login_router, tags=["login"])
 
 # 2. 기본 페이지 (Health Check 용)
 @app.get("/")
