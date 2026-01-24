@@ -21,7 +21,7 @@ def get_current_user(
     #인증이 실패한다면 보낼 에러 메시지 정의 / 401 자격 없음
     credentials_exception = HTTPException(  
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detial="자격 증명을 확인할 수 없습니다.",
+        detail="자격 증명을 확인할 수 없습니다.",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -45,5 +45,3 @@ def get_current_user(
         raise credentials_exception
 
     return user
-
-        
