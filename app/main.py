@@ -4,6 +4,7 @@ from app.db.session import engine
 
 from app.api.v1.endpoints.user import router as user_router
 from app.api.v1.endpoints.login import router as login_router
+from app.api.v1.endpoints.project import router as project_router
 
 app = FastAPI()
 
@@ -23,8 +24,8 @@ def check_db_connection():
 
 #라우터 추가
 app.include_router(user_router, prefix="/users", tags=["users"])
-
 app.include_router(login_router, tags=["login"])
+app.include_router(project_router, prefix="/projects", tags=["projects"])
 
 # 2. 기본 페이지 (Health Check 용)
 @app.get("/")
