@@ -29,3 +29,6 @@ def get_project(db: Session, project_id: int):
 # 프로젝트 목록 조회 (여러 개)
 def get_projects(db: Session, skip: int = 0, limit: int = 10):
     return db.query(Project).offset(skip).limit(limit).all()
+
+def get_projects_by_user(db:Session, user_id: int) :
+    return db.query(Project).filter(Project.user_id == user_id).all()

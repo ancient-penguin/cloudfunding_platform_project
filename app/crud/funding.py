@@ -50,3 +50,7 @@ def create_funding(db: Session, funding_in: FundingCreate, user_id: int):
     except Exception as e:
         db.rollback() # 에러 나면 모든 변경 취소!
         raise e
+
+# user의 reward 조회 기능
+def get_fundings_by_user(db: Session, user_id: int):
+    return db.query(Funding).filter(Funding.user_id == user_id).all()
