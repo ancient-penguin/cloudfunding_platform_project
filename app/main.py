@@ -6,6 +6,7 @@ from app.api.v1.endpoints.user import router as user_router
 from app.api.v1.endpoints.login import router as login_router
 from app.api.v1.endpoints.project import router as project_router
 from app.api.v1.endpoints.reward import router as reward_router
+from app.api.v1.endpoints.funding import router as funding_router
 
 app = FastAPI()
 
@@ -28,6 +29,7 @@ app.include_router(user_router, prefix="/users", tags=["users"])
 app.include_router(login_router, tags=["login"])
 app.include_router(project_router, prefix="/projects", tags=["projects"])
 app.include_router(reward_router, prefix="/projects", tags=["rewards"])
+app.include_router(funding_router, prefix="/fundings", tags=["fundings"])
 
 # 2. 기본 페이지 (Health Check 용)
 @app.get("/")
