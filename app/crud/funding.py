@@ -6,6 +6,7 @@ from app.models.funding import Funding
 from app.models.reward import Reward
 from app.models.project import Project
 from app.schemas.funding import FundingCreate
+from datetime import datetime
 
 def create_funding(db: Session, funding_in: FundingCreate, user_id: int):
     # 1. 리워드 정보 가져오기
@@ -55,8 +56,7 @@ def create_funding(db: Session, funding_in: FundingCreate, user_id: int):
 def get_fundings_by_user(db: Session, user_id: int):
     return db.query(Funding).filter(Funding.user_id == user_id).all()
 
-    from datetime import datetime
-
+# funding cancel하기
 def cancel_funding(db: Session, funding_id: int, user_id: int):
     # 1. 후원 내역 찾기 (내 것인지 확인)
     funding = db.query(Funding).filter(Funding.id == funding_id, Funding.user_id == user_id).first()
