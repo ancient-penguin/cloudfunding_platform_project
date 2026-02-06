@@ -54,3 +54,44 @@ def create_funding(db: Session, funding_in: FundingCreate, user_id: int):
 # user의 reward 조회 기능
 def get_fundings_by_user(db: Session, user_id: int):
     return db.query(Funding).filter(Funding.user_id == user_id).all()
+
+    from datetime import datetime
+
+def cancel_funding(db: Session, funding_id: int, user_id: int):
+    # 1. 후원 내역 찾기 (내 것인지 확인)
+    funding = db.query(Funding).filter(Funding.id == funding_id, Funding.user_id == user_id).first()
+    if not funding:
+        raise HTTPException(status_code=404, detail="후원 내역을 찾을 수 없습니다.")
+
+    # 2. 이미 취소된 건인지 확인
+    if funding.status == 'cancelled':
+        raise HTTPException(status_code=400, detail="이미 취소된 후원입니다.")
+
+    # 3. 프로젝트 기간 확인 [핵심 로직!]
+    project = db.query(Project).filter(Project.id == funding.project_id).first()
+    if not project: # 혹시 프로젝트가 없으면
+         raise HTTPException(status_code=404, detail="프로젝트가 존재하지 않습니다.")
+         
+    if datetime.now() > project.end_date:
+        raise HTTPException(status_code=400, detail="프로젝트가 마감되어 취소할 수 없습니다.")
+
+    # 4. 트랜잭션 시작 (3가지 동시 변경)
+    try:
+        # A. 리워드 재고 원복
+        reward = db.query(Reward).filter(Reward.id == funding.reward_id).first()
+        if reward:
+            reward.sold_count -= 1
+        
+        # B. 프로젝트 모금액 차감
+        project.current_amount -= funding.amount
+        
+        # C. 후원 상태 변경 ('cancelled') -> 삭제하지 않음!
+        funding.status = 'cancelled'
+
+        db.commit()
+        db.refresh(funding)
+        return funding
+
+    except Exception as e:
+        db.rollback()
+        raise e
