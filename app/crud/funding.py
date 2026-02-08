@@ -1,5 +1,6 @@
 # app/crud/funding.py
 
+import logging
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.funding import Funding
@@ -8,26 +9,34 @@ from app.models.project import Project
 from app.schemas.funding import FundingCreate
 from datetime import datetime
 
+logger = logging.getLogger(__name__)
+
 def create_funding(db: Session, funding_in: FundingCreate, user_id: int):
     # 1. 리워드 정보 가져오기
-    reward = db.query(Reward).filter(Reward.id == funding_in.reward_id).first()
-    if not reward:
-        raise HTTPException(status_code=404, detail="리워드를 찾을 수 없습니다.")
+    #with_for_update()는 동시성 제어를 위해서 하는 것임. 먼저 들어와서 db 변경을 진행중에 있으면, 
+    #그 이후에 온 애는 변경이 불가능함. 
+    try: 
+        reward = db.query(Reward).filter(Reward.id == funding_in.reward_id).with_for_update().first()
 
-    # 2. 유효성 검사 (재고 & 가격) [Service Logic]
-    # 남은 재고 계산
-    remaining_stock = reward.stock - reward.sold_count
-    if remaining_stock < 1:
-        raise HTTPException(status_code=400, detail="품절된 리워드입니다.")
-    
-    if funding_in.amount < reward.price:
-        raise HTTPException(status_code=400, detail="후원 금액이 리워드 가격보다 적습니다.")
+        if not reward:
+            raise HTTPException(status_code=404, detail="리워드를 찾을 수 없습니다.")
 
-    # 3. 프로젝트 정보 가져오기 (모금액 업데이트를 위해)
-    project = db.query(Project).filter(Project.id == reward.project_id).first()
-    
-    # ---------------- 트랜잭션 시작 (여기서부터 DB 변경) ----------------
-    try:
+        # 2. 유효성 검사 (재고 & 가격) [Service Logic]
+        # 남은 재고 계산
+        remaining_stock = reward.stock - reward.sold_count
+        if remaining_stock < 1:
+            raise HTTPException(status_code=400, detail="품절된 리워드입니다.")
+        
+        if funding_in.amount < reward.price:
+            raise HTTPException(
+                status_code=400, 
+                detail="후원 금액이 리워드 가격보다 적습니다."
+            )
+
+        # 3. 프로젝트 정보 가져오기 (모금액 업데이트를 위해)
+        project = db.query(Project).filter(Project.id == reward.project_id).first()
+        
+        # ---------------- 트랜잭션 시작 (여기서부터 DB 변경) ----------------
         # A. 후원 기록 생성
         db_funding = Funding(
             user_id=user_id,
@@ -46,11 +55,19 @@ def create_funding(db: Session, funding_in: FundingCreate, user_id: int):
         # D. 모든 변경사항 확정 (Commit)
         db.commit()
         db.refresh(db_funding)
+        logger.info(f"Funding success: User {user_id} -> Project {project.id}, Amount {funding_in.amount}")
         return db_funding
-
+    
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception as e:
-        db.rollback() # 에러 나면 모든 변경 취소!
-        raise e
+        db.rollback() # 에러 나면 모든 변경 취소
+        logger.error(f"Unexpected error during funding creation: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SEVER_ERROR,
+            detail="후원 처리 중 알 수 없는 오류가 발생하였습니다."
+        )
 
 # user의 reward 조회 기능
 def get_fundings_by_user(db: Session, user_id: int):
